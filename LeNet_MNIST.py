@@ -68,9 +68,9 @@ with tf.variable_scope('Fc'):
     tf.summary.histogram('layer3', fc_layer3)
 
 with tf.variable_scope('Loss'):
-    loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=fc_layer3, name='cross_entropy')
+    loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=fc_layer3, name='cross_entropy'))
     loss = tf.add(loss, tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
-    tf.summary.scalar('loss', tf.reduce_mean(loss))
+    tf.summary.scalar('loss', loss)
 
 train_merge = tf.summary.merge_all()
 
