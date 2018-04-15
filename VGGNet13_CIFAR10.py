@@ -271,7 +271,7 @@ class VGGNet():  # VGG13:13 layers
 
             tf.summary.histogram('after_fc', self.fc)
 
-        with tf.variable_scope('Loss'):
+        with tf.name_scope('Loss'):
             loss = tf.reduce_mean(
                 tf.nn.softmax_cross_entropy_with_logits(labels=self.label, logits=self.fc, name='cross_entropy'))
             self.loss = tf.add(loss, tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
@@ -285,7 +285,7 @@ class VGGNet():  # VGG13:13 layers
         with tf.control_dependencies(update_ops):
             self.train_step = tf.train.AdamOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
 
-        with tf.variable_scope('Test_step'):
+        with tf.name_scope('Test_step'):
             self.acc_op = tf.metrics.accuracy(tf.argmax(self.label, axis=1), tf.argmax(self.fc, axis=1))[1]
             self.train_acc_summary = tf.summary.scalar('train_acc', self.acc_op)
             self.test_acc_summary = tf.summary.scalar('test_acc', self.acc_op)
@@ -294,7 +294,7 @@ class VGGNet():  # VGG13:13 layers
 # 开始训练网络
 start = time()
 os.environ['CUDA_VISIBLE_DEVICES'] = '0' if on_server is False else '1'  # 设置在服务器端运行网络的GPU
-writer = tf.summary.FileWriter('./log/')
+writer = tf.summary.FileWriter('./test/')
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 
@@ -350,9 +350,7 @@ with tf.Session(config=config) as sess:
 
     writer.close()
 
-
-# 另外一种自动化的快速构建网络的方式,可以减少一点代码量
-#
+# 另一种快速构建网络的方式，代码中构建的是VGG19，相对比上边的程序可以大量减少代码量
 # import os
 # import random
 # from time import time
@@ -383,10 +381,6 @@ with tf.Session(config=config) as sess:
 # std = [0.2470, 0.2435, 0.2616]
 #
 # train_total_step = (50000 // batch_size + 1) * Epoch
-#
-# gpu_devices = [1, 2]  # GPU设备号码
-#
-# gpu_devices = list(map(lambda x: '/gpu:' + str(x), gpu_devices))
 #
 #
 # # 构建训练数据集
@@ -509,9 +503,7 @@ with tf.Session(config=config) as sess:
 # train_eval_batch = train_eval_iterator.get_next()
 #
 #
-# tf.split(train_batch, num_or_size_splits=len(gpu_devices), axis=0)
-#
-# class VGGNet():  # VGG13:13 layers
+# class VGGNet():  # VGG19
 #
 #     def __init__(self, basic_units):
 #
@@ -575,7 +567,7 @@ with tf.Session(config=config) as sess:
 #
 #             tf.summary.histogram('after_fc', self.fc)
 #
-#         with tf.variable_scope('Loss'):
+#         with tf.name_scope('Loss'):
 #             loss = tf.reduce_mean(
 #                 tf.nn.softmax_cross_entropy_with_logits(labels=self.label, logits=self.fc, name='cross_entropy'))
 #             self.loss = tf.add(loss, tf.add_n(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)))
@@ -589,7 +581,7 @@ with tf.Session(config=config) as sess:
 #         with tf.control_dependencies(update_ops):
 #             self.train_step = tf.train.AdamOptimizer(self.lr).minimize(self.loss, global_step=self.global_step)
 #
-#         with tf.variable_scope('Test_step'):
+#         with tf.name_scope('Test_step'):
 #             self.acc_op = tf.metrics.accuracy(tf.argmax(self.label, axis=1), tf.argmax(self.fc, axis=1))[1]
 #             self.train_acc_summary = tf.summary.scalar('train_acc', self.acc_op)
 #             self.test_acc_summary = tf.summary.scalar('test_acc', self.acc_op)
@@ -654,5 +646,4 @@ with tf.Session(config=config) as sess:
 #         print('end')
 #
 #     writer.close()
-#
 
