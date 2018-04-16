@@ -27,8 +27,8 @@ std = [0.2470, 0.2435, 0.2616]
 
 train_total_step = (50000 // batch_size + 1) * Epoch
 
-gpu_devices = [0]  # 可使用的GPU设备号码
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # 设置在服务器端运行网络的GPU设备号码
+gpu_devices = [0, 1, 2]  # 可使用的GPU设备号码
+os.environ['CUDA_VISIBLE_DEVICES'] = '1,2,3'  # 设置在服务器端运行网络的GPU设备号码
 gpu_devices = list(map(lambda x: '/gpu:' + str(x), gpu_devices))
 
 
@@ -248,11 +248,11 @@ class VGGNet():  # VGG19
                 # 记录loss曲线信息
                 self.train_summary = tf.summary.scalar('loss', tf.add_n(tf.get_collection('loss')) / len(gpu_devices))
 
-                # 平均梯度，并利用求取平均值之后的梯度来更新网络参数 方法一
-                start_time = time()
+                # 利用求取平均值之后的梯度来更新网络参数
+
+                # 平均梯度方法一
 
                 var_list = list(zip(*(tf.get_collection('grad_var')[0])))[1]  # 取出所有的变量
-
                 grad_list = []
 
                 for _ in range(len(gpu_devices)):
@@ -262,17 +262,11 @@ class VGGNet():  # VGG19
                     for j in range(1, len(gpu_devices)):
                         grad_list[0][i] = tf.add(grad_list[0][i], grad_list[j][i])
 
-                grad_list = grad_list[0]
+                    grad_list[0][i] /= len(gpu_devices)
 
-                for i in range(len(grad_list)):
-                    grad_list[i] /= len(gpu_devices)
-
-                grad_var_list = list(zip(grad_list, var_list))
-
-                print(start_time - time())
+                grad_var_list = list(zip(grad_list[0], var_list))
 
                 # # 平均梯度方法二
-                # start_time = time()
                 #
                 # grad_var_list = []
                 # for grad_var in zip(*tf.get_collection('grad_var')):
@@ -287,8 +281,6 @@ class VGGNet():  # VGG19
                 #     var = grad_var[0][1]
                 #
                 #     grad_var_list.append((grad, var))
-                #
-                # print(time() - start_time)
 
                 # 使用BN的话一定要加上这一步!!!!!!!!!!!!!!!!!!!!
                 update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
